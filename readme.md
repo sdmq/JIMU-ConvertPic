@@ -353,3 +353,36 @@ convert2base64s接口返回信息示例如下：
   - GetFileUtil：HttpGet方式获取文件工具类。
   - WaterMarkUtil：水印处理工具类，支持图片水印、文字水印。
   - WriteBackUtil：回写文件、回调接口的工具类。
+
+
+
+# JAI包安装说明
+
+本项目中，使用JAI读取各类图片文件。
+
+相关Jar包在公网的Maven库中已无法直接在线安装，需要手工安装到本地Maven库中。
+
+- 本地安装Maven。
+
+从公网上下载Maven。可以从官网下载对应操作系统的版本：[Maven – Download Apache Maven](https://maven.apache.org/download.cgi)
+
+设置本地Maven库的文件夹。（本例为：D:/MavenRep/）
+
+- 修改idea或Eclipse中的Maven设置
+
+在idea或Eclipse中，修改系统设置，将原有的Maven程序指定为新安装的独立Maven（本例为：d:/maven）；Maven本地库文件夹改为单独安装的Maven库指定的文件夹。（本例为：D:/MavenRep/）
+
+- 通过命令行将jar包安装到本地Maven库
+
+将本项目的lib文件夹中的两个jar包复制到本地某个文件夹中（例如：d:/jar/）。
+
+然后执行如下命令：
+
+mvn install:install-file -Dfile=D:\jar\jai_core-1.1.2-beta.jar -DgroupId=javax.media -DartifactId=jai_core -Dversion=1.1.2-beta -Dpackaging=jar
+
+mvn install:install-file -Dfile=D:\jar\jai_codec-1.1.3.jar -DgroupId=javax.media -DartifactId=jai_codec -Dversion=1.1.3 -Dpackaging=jar
+
+注：Maven命令格式说明
+
+mvn install:install-file -Dfile=jar包的位置 -DgroupId=上面的groupId -DartifactId=上面的artifactId -Dversion=上面的version -Dpackaging=jar
+

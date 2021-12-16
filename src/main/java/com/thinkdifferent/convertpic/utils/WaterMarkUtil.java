@@ -26,13 +26,13 @@ public class WaterMarkUtil {
      * @param args
      */
     public static void main(String[] args) {
-        String srcImgPath = "d:/1.jpg";
-        String iconPath = "d:/watermark.png";
-        String targerPath = "d:/1_water.jpg";
+        String srcImgPath = "D:/cvtest/1.jpg";
+        String iconPath = "D:/IdeaProjects/JIMU-ConvertPic/watermark/watermark.png";
+        String targerPath = "D:/cvtest/1_wm.jpg";
         // 给图片添加水印
-        WaterMarkUtil.markImageByIcon(iconPath, srcImgPath, targerPath);
-        // 给图片添加水印,水印旋转-45
-        WaterMarkUtil.markImageByIcon(iconPath, srcImgPath, targerPath, -45,
+//        WaterMarkUtil.markImageByIcon(iconPath, srcImgPath, targerPath);
+//        // 给图片添加水印,水印旋转-45
+        WaterMarkUtil.markImageByIcon(iconPath, srcImgPath, targerPath, 45,
                 null, null, null, null);
 
     }
@@ -93,7 +93,6 @@ public class WaterMarkUtil {
                 // 设置水印旋转
                 g.rotate(Math.toRadians(intDegree), (double) buffImg.getWidth() / 2, (double) buffImg.getHeight() / 2);
             }
-
 
             // 水印图象的路径 水印一般为gif或者png的，这样可设置透明度
             ImageIcon imgIcon = new ImageIcon(strIconPath);
@@ -211,8 +210,6 @@ public class WaterMarkUtil {
             intYMove = 600;
         }
 
-
-        InputStream is = null;
         OutputStream os = null;
         try {
             // 源图片
@@ -243,11 +240,12 @@ public class WaterMarkUtil {
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, floatAlpha));
 
             int x = -intImageWidth / 2;
-            int y = -intImageHeight / 2;
+            int y = 0;
             int markWidth = intFontSize * getTextLength(strWaterMarkText);// 字体长度
             int markHeight = intFontSize;// 字体高度
 
-            // 循环添加水印
+
+             // 循环添加水印
             while (x < intImageWidth * 1.5) {
                 y = -intImageHeight / 2;
                 while (y < intImageHeight * 1.5) {
@@ -257,6 +255,7 @@ public class WaterMarkUtil {
                 }
                 x += markWidth + intXMove;
             }
+
             // 释放资源
             g.dispose();
             // 生成图片
@@ -268,12 +267,6 @@ public class WaterMarkUtil {
             e.printStackTrace();
             return false;
         } finally {
-            try {
-                if (null != is)
-                    is.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
             try {
                 if (null != os)
                     os.close();

@@ -3,7 +3,6 @@ package com.thinkdifferent.convertpic.service.impl;
 import com.thinkdifferent.convertpic.config.ConvertPicConfig;
 import com.thinkdifferent.convertpic.service.ConvertPicService;
 import com.thinkdifferent.convertpic.utils.*;
-import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

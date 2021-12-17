@@ -143,9 +143,61 @@ MQ异步生成JPG/PDF接口URL：http://host:port/api/convert4mq
 	},
 ```
 
-- inputType：必填，值为“path”。
+- inputType：必填，值为“url”。
 - inputFile：必填，值为需转换的图片文件（输入文件）在Web服务中的URL地址。
 - inputHeaders：非必填。如果Web服务器访问时需要设置请求头或Token认证，则需要在此处设置请求头的内容；否则此处可不添加。
+
+### 水印设置
+
+系统支持在转换的JPG/PDF文件中加入图片水印或文字水印。
+
+如果需要加入图片水印，设置如下：
+
+```json
+    "waterMark":{
+        "waterMarkType":"pic",
+        "waterMarkFile":"watermark.png",
+        "degree":"45",
+        "LocateX":"150",
+        "LocateY":"150",
+        "waterMarkWidth":"100",
+        "waterMarkHeight":"100"
+    },
+```
+
+- waterMarkType：必填，图片水印为“pic”。
+- waterMarkFile：必填，为本服务“watermark”文件夹中已经存放的水印文件。建议使用png格式的文件（支持半透明）。
+- degree：必填，旋转角度。
+- LocateX：非必填，水印在文档中横轴的位置。默认值为宽度的1/6位置（左下角）。
+- LocateY：非必填，水印在文档中纵轴的位置。默认值为高度的1/6位置（左下角）。
+- waterMarkWidth：非必填，水印图片的宽度。默认值为150。
+- waterMarkHeight：非必填，水印图片的高度。默认值为150。
+
+如果需要加入文字水印，设置如下：
+
+```json
+	"waterMark": {
+		"waterMarkType": "text",
+		"waterMarkText": "内部文件",
+		"degree": "45",
+		"alpha": "0.5f",
+		"fontName": "宋体",
+		"fontSize": "20",
+		"fontColor": "gray",
+         "xMove":"200",
+         "yMove":"200"
+	},
+```
+
+- waterMarkType：必填，文字水印为“text”。
+- waterMarkText：必填，水印的文字内容。
+- degree：必填，旋转角度。
+- alpha：非必填，透明度。默认值“0.5f”。浮点小数，添加的值必须以“f”结尾。
+- fontName：非必填，字体名称。默认值“宋体”。此处的字体为itext包中已有的字体。
+- fontSize：非必填，字号大小。默认值40。
+- fontColor：非必填，字体颜色。默认值“gray”（灰色）。
+- xMove：必填。文字横向间距。
+- xMove：必填。文字纵向间距。
 
 ### 输出信息
 

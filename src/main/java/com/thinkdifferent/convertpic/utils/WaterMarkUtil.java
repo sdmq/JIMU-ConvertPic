@@ -2,22 +2,15 @@ package com.thinkdifferent.convertpic.utils;
 
 import org.springframework.stereotype.Component;
 
-import java.awt.AlphaComposite;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.RenderingHints;
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
-
-import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 
 @Component
 public class WaterMarkUtil {
@@ -224,7 +217,7 @@ public class WaterMarkUtil {
             // 得到画笔对象
             Graphics2D g = buffImg.createGraphics();
             // 设置对线段的锯齿状边缘处理
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             // 绘制原图片，作为加水印的基础图片
             g.drawImage(buffSourceImg, 0, 0, buffSourceImg.getWidth(), buffSourceImg.getHeight(), null);
 

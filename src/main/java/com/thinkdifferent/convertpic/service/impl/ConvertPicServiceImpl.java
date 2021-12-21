@@ -1,5 +1,10 @@
 package com.thinkdifferent.convertpic.service.impl;
 
+import cn.hutool.core.util.CharsetUtil;
+import cn.hutool.extra.ftp.Ftp;
+import cn.hutool.extra.ftp.FtpConfig;
+import cn.hutool.extra.ftp.FtpMode;
+import cn.hutool.http.HttpUtil;
 import com.thinkdifferent.convertpic.config.ConvertPicConfig;
 import com.thinkdifferent.convertpic.service.ConvertPicService;
 import com.thinkdifferent.convertpic.utils.*;
@@ -10,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,15 +111,20 @@ public class ConvertPicServiceImpl implements ConvertPicService {
 
             // 如果输入类型是url，则通过http协议读取文件，写入到默认输出路径中
             if ("url".equalsIgnoreCase(strInputType)) {
-                Map mapInputHeaders = new HashMap<>();
-                if (parameters.get("inputHeaders") != null) {
-                    mapInputHeaders = (Map) parameters.get("inputHeaders");
+                String strInputFileName = strInputPath.substring(strInputPath.lastIndexOf("/") + 1);
+                // 检查目标文件夹中是否有重名文件，如果有，先删除。
+                fileInput = new File(strInPutTempPath + strInputFileName);
+                if (fileInput.exists()) {
+                    fileInput.delete();
                 }
 
-                fileInput = getFileFromURL(strInputPath, strInPutTempPath, mapInputHeaders);
-                strInputPath = fileInput.getCanonicalPath();
-            }
+                // 从指定的URL中将文件读取下载到目标路径
+                HttpUtil.downloadFile(strInputPath, strInPutTempPath + strInputFileName);
 
+                strInputPath = strInPutTempPath + strInputFileName;
+            } else {
+                fileInput = new File(strInputPath);
+            }
 
             // 转换出来的文件名（不包含扩展名）（"001-online"）
             String strOutPutFileName = String.valueOf(parameters.get("outPutFileName"));
@@ -271,27 +282,57 @@ public class ConvertPicServiceImpl implements ConvertPicService {
                         }
                     } else if ("ftp".equalsIgnoreCase(strWriteBackType)) {
                         // ftp回写
+                        boolean blnPassive = jsonWriteBack.getBoolean("passive");
                         String strFtpHost = jsonWriteBack.getString("host");
                         int intFtpPort = jsonWriteBack.getInt("port");
                         String strFtpUserName = jsonWriteBack.getString("username");
                         String strFtpPassWord = jsonWriteBack.getString("password");
-                        String strFtpBasePath = jsonWriteBack.getString("basepath");
                         String strFtpFilePath = jsonWriteBack.getString("filepath");
 
                         boolean blnFptSuccess = false;
-                        if (strOutPutFileType.indexOf("jpg") > -1) {
-                            FileInputStream in;
-                            for (String strJpg : listJpg) {
-                                fileJpg = new File(strJpg);
-                                in = new FileInputStream(fileJpg);
-                                blnFptSuccess = FtpUtil.uploadFile(strFtpHost, intFtpPort, strFtpUserName, strFtpPassWord,
-                                        strFtpBasePath, strFtpFilePath, fileJpg.getName(), in);
+                        Ftp ftp = null;
+                        FileInputStream in = null;
+
+                        try {
+                            if(blnPassive){
+                                // 服务器需要代理访问，才能对外访问
+                                FtpConfig ftpConfig = new FtpConfig(strFtpHost, intFtpPort,
+                                        strFtpUserName, strFtpPassWord,
+                                        CharsetUtil.CHARSET_UTF_8);
+                                ftp = new Ftp(ftpConfig, FtpMode.Passive);
+                            }else{
+                                // 服务器不需要代理访问
+                                ftp = new Ftp(strFtpHost, intFtpPort,
+                                        strFtpUserName, strFtpPassWord);
                             }
-                        }
-                        if (strOutPutFileType.indexOf("pdf") > -1) {
-                            FileInputStream in = new FileInputStream(filePdf);
-                            blnFptSuccess = FtpUtil.uploadFile(strFtpHost, intFtpPort, strFtpUserName, strFtpPassWord,
-                                    strFtpBasePath, strFtpFilePath, filePdf.getName(), in);
+
+
+                            if (strOutPutFileType.indexOf("jpg") > -1) {
+                                for (String strJpg : listJpg) {
+                                    fileJpg = new File(strJpg);
+                                    in = new FileInputStream(fileJpg);
+                                    blnFptSuccess =  ftp.upload(strFtpFilePath, fileJpg.getName(), in);
+                                }
+                            }else if (strOutPutFileType.indexOf("pdf") > -1) {
+                                in = new FileInputStream(filePdf);
+                                blnFptSuccess =  ftp.upload(strFtpFilePath, filePdf.getName(), in);
+                            }
+
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        } finally {
+                            try {
+                                if (ftp != null) {
+                                    ftp.close();
+                                }
+
+                                if(in != null){
+                                    in.close();
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
 
                         if (blnFptSuccess) {
@@ -321,9 +362,17 @@ public class ConvertPicServiceImpl implements ConvertPicService {
                     // 回调对方系统提供的CallBack方法。
                     if (parameters.get("callBackURL") != null) {
                         String strCallBackURL = String.valueOf(parameters.get("callBackURL"));
-                        strCallBackURL = strCallBackURL + "?file=" + strOutPutFileName + "&flag=" + strFlag;
 
-                        WriteBackUtil.sendGet(strCallBackURL);
+                        Map mapCallBackHeaders = new HashMap<>();
+                        if (parameters.get("callBackHeaders") != null) {
+                            mapCallBackHeaders = (Map) parameters.get("callBackHeaders");
+                        }
+
+                        Map mapParams = new HashMap<>();
+                        mapParams.put("file", strOutPutFileName);
+                        mapParams.put("flag", strFlag);
+
+                        jsonReturn = callBack(strCallBackURL, mapCallBackHeaders, mapParams);
                     }
 
                 } else {
@@ -352,37 +401,28 @@ public class ConvertPicServiceImpl implements ConvertPicService {
 
     }
 
-
     /**
-     * 从URL中读取文件，写入到本地临时文件夹中
-     *
-     * @param strInputURL      输入文件的URL路径
-     * @param strInPutTempPath 本地存储临时文件夹
-     * @param mapInputHeaders  请求头。可空。
-     * @return 获取到的文件对象
+     * 回调业务系统提供的接口
+     * @param strWriteBackURL 回调接口URL
+     * @param mapWriteBackHeaders 请求头参数
+     * @param mapParams 参数
+     * @return JSON格式的返回结果
      */
-    private static File getFileFromURL(String strInputURL, String strInPutTempPath, Map mapInputHeaders) {
-        try {
-            String strInputFileName = strInputURL.substring(strInputURL.lastIndexOf("/") + 1, strInputURL.length());
-            // 检查目标文件夹中是否有重名文件，如果有，先删除。
-            File fileInput = new File(strInPutTempPath + strInputFileName);
-            if (fileInput.exists()) {
-                fileInput.delete();
-            }
+    private static JSONObject callBack(String strWriteBackURL, Map<String,String> mapWriteBackHeaders, Map<String, Object> mapParams){
+        //发送get请求并接收响应数据
+        String strResponse = HttpUtil.createGet(strWriteBackURL).
+                addHeaders(mapWriteBackHeaders).form(mapParams)
+                .execute().body();
 
-            // 从指定的URL中将文件读取为Byte数组，并写入目标文件
-            byte[] byteFile = GetFileUtil.getFile(strInputURL, mapInputHeaders);
-            fileInput = GetFileUtil.byte2File(byteFile, strInPutTempPath + strInputFileName);
-
-            return fileInput;
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        JSONObject jsonReturn = new JSONObject();
+        if(strResponse != null){
+            jsonReturn.put("flag", "success");
+            jsonReturn.put("message", "Convert Office File Callback Success.\n" +
+                    "Message is :\n" +
+                    strResponse);
         }
 
-        return null;
+        return jsonReturn;
     }
-
-
 
 }

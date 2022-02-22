@@ -24,9 +24,11 @@ public class ConvertPicConsumer {
     @RabbitListener(queues  = RabbitMQConfig.QUEUE_RECEIVE)
     public void receiveTodoRequestByMap(String strData){
         try{
-            JSONObject jsonData = JSONObject.fromObject(strData);
-            task.doTask(convertPicService, jsonData);
-            //	      Thread.currentThread().join();
+            if(RabbitMQConfig.consumer){
+                JSONObject jsonData = JSONObject.fromObject(strData);
+                task.doTask(convertPicService, jsonData);
+                //	      Thread.currentThread().join();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

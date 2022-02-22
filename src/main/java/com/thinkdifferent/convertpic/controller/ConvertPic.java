@@ -1,6 +1,7 @@
 package com.thinkdifferent.convertpic.controller;
 
 import com.thinkdifferent.convertpic.config.ConvertPicConfig;
+import com.thinkdifferent.convertpic.config.RabbitMQConfig;
 import com.thinkdifferent.convertpic.service.ConvertPicService;
 import com.thinkdifferent.convertpic.service.RabbitMQService;
 import io.swagger.annotations.Api;
@@ -60,8 +61,16 @@ public class ConvertPic {
     @ApiOperation("接收传入的JSON数据，将源图片文件转换为Jpg文件")
     @RequestMapping(value = "/convert", method = RequestMethod.POST)
     public Map<String, String> convert2Jpg(@RequestBody JSONObject jsonInput) {
+        JSONObject jsonReturn = new JSONObject();
 
-        JSONObject jsonReturn = convertPicService.ConvertPic(jsonInput);
+        if(!RabbitMQConfig.producer){
+            jsonReturn = convertPicService.ConvertPic(jsonInput);
+        }else{
+            jsonReturn.put("flag", "success" );
+            jsonReturn.put("message", "Set Data to MQ Success" );
+
+            rabbitMQService.setData2MQ(jsonInput);
+        }
 
         return jsonReturn;
     }
@@ -186,24 +195,6 @@ public class ConvertPic {
         }
 
         return jsonReturn;
-    }
-
-
-    /**
-     * 接收传入的JSON数据，加入到RabbitMQ队列中，队列异步处理，将原文文件转换为Mp4文件
-     * @param jsonInput 输入的JSON对象。内容与“convert”接口相同
-     * @return
-     */
-    @ApiOperation("接收传入的JSON数据，加入到RabbitMQ队列中，队列异步处理，将原文文件转换为Mp4文件")
-    @RequestMapping(value = "/convert4mq", method = RequestMethod.POST)
-    public Map<String, String> data2MQ(@RequestBody JSONObject jsonInput) {
-        Map<String, String> mapReturn = new HashMap<>();
-        mapReturn.put("flag", "success" );
-        mapReturn.put("message", "Set Data to MQ Success" );
-
-        rabbitMQService.setData2MQ(jsonInput);
-
-        return mapReturn;
     }
 
 }

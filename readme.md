@@ -114,9 +114,7 @@ convert:
 
 ## 图片转换接口说明
 
-直接生成JPG/PDF接口URL：http://host:port/api/convert
-
-MQ异步生成JPG/PDF接口URL：http://host:port/api/convert4mq
+生成JPG/PDF接口URL：http://host:port/api/convert
 
 接口调用方式：POST
 

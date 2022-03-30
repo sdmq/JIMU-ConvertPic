@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,7 +126,11 @@ public class ConvertPicServiceImpl implements ConvertPicService {
                 fileInput = new File(strInputPath);
             }
 
-            String strInputFileType = FileTypeUtil.getFileType(new FileInputStream(new File(strInputPath)));
+            InputStream is = new FileInputStream(new File(strInputPath));
+            String strInputFileType = FileTypeUtil.getFileType(is);
+            if(is != null){
+                is.close();
+            }
 
             // 转换出来的文件名（不包含扩展名）（"001-online"）
             String strOutPutFileName = String.valueOf(parameters.get("outPutFileName"));

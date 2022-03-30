@@ -98,7 +98,6 @@ public class ConvertPicServiceImpl implements ConvertPicService {
             // 输入文件（"D:/cvtest/001.tif"）
             String strInputPath = String.valueOf(parameters.get("inputFile"));
             String strInputPathParam = strInputPath;
-            String strInputFileExt = strInputPath.substring(strInputPath.lastIndexOf(".") + 1);
 
             // 默认输入文件存储的临时路径（非path类型时使用）
             String strInPutTempPath = ConvertPicConfig.inPutTempPath;
@@ -125,6 +124,8 @@ public class ConvertPicServiceImpl implements ConvertPicService {
             } else {
                 fileInput = new File(strInputPath);
             }
+
+            String strInputFileType = FileTypeUtil.getFileType(new FileInputStream(new File(strInputPath)));
 
             // 转换出来的文件名（不包含扩展名）（"001-online"）
             String strOutPutFileName = String.valueOf(parameters.get("outPutFileName"));
@@ -242,7 +243,7 @@ public class ConvertPicServiceImpl implements ConvertPicService {
                 File filePdf = null;
                 // 将传入的jpg文件转换为pdf文件，存放到输出路径中
                 if (strOutPutFileType.indexOf("pdf") > -1) {
-                    if ("tif".equalsIgnoreCase(strInputFileExt) || "tiff".equalsIgnoreCase(strInputFileExt)) {
+                    if ("tif".equalsIgnoreCase(strInputFileType)) {
                         if (!parameters.containsKey("waterMark")) {
                             // 如果没有水印，直接用tif转pdf
                             filePdf = ConvertPicUtil.convertTif2Pdf(strInputPath,
